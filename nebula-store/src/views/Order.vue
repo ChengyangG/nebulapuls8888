@@ -3,8 +3,39 @@
     <div class="container">
       <el-card shadow="never" class="order-card">
         <template #header>
-          <div class="card-header">我的订单</div>
+          <div class="card-header">
+            <span>我的订单</span>
+            <span class="header-tip">实时同步订单状态</span>
+          </div>
         </template>
+
+        <div class="summary-grid">
+          <div class="summary-item">
+            <div class="label">待支付</div>
+            <div class="value">{{ statusStats.pending }}</div>
+          </div>
+          <div class="summary-item">
+            <div class="label">待发货</div>
+            <div class="value">{{ statusStats.toDeliver }}</div>
+          </div>
+          <div class="summary-item">
+            <div class="label">已发货</div>
+            <div class="value">{{ statusStats.shipped }}</div>
+          </div>
+          <div class="summary-item">
+            <div class="label">已完成</div>
+            <div class="value">{{ statusStats.completed }}</div>
+          </div>
+        </div>
+
+        <el-tabs v-model="activeTab" class="status-tabs" @tab-click="handleTabClick">
+          <el-tab-pane label="全部订单" name="-1" />
+          <el-tab-pane label="待支付" name="0" />
+          <el-tab-pane label="待发货" name="1" />
+          <el-tab-pane label="已发货" name="2" />
+          <el-tab-pane label="已完成" name="3" />
+          <el-tab-pane label="售后/退款" name="5" />
+        </el-tabs>
 
         <el-table :data="tableData" border stripe size="large" v-loading="loading">
           <el-table-column prop="orderNo" label="订单号" width="220" />
@@ -174,7 +205,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
 import { getMyOrders, receiveOrder, cancelOrder, submitReview, getOrderDetailByNo, applyRefund } from '@/api/store'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useRouter } from 'vue-router'
@@ -223,7 +254,8 @@ const router = useRouter()
 const tableData = ref<Order[]>([])
 const loading = ref(false)
 const total = ref(0)
-const queryParams = reactive({ page: 1, size: 10 })
+const queryParams = reactive({ page: 1, size: 10, status: null as number | null })
+const activeTab = ref('-1')
 
 // 详情 & 评价
 const detailVisible = ref(false)
@@ -249,6 +281,23 @@ const loadData = async () => {
   } finally {
     loading.value = false
   }
+}
+
+const statusStats = computed(() => {
+  const counts = { pending: 0, toDeliver: 0, shipped: 0, completed: 0 }
+  tableData.value.forEach((order) => {
+    if (order.status === 0) counts.pending += 1
+    if (order.status === 1) counts.toDeliver += 1
+    if (order.status === 2) counts.shipped += 1
+    if (order.status === 3) counts.completed += 1
+  })
+  return counts
+})
+
+const handleTabClick = () => {
+  queryParams.status = activeTab.value === '-1' ? null : Number(activeTab.value)
+  queryParams.page = 1
+  loadData()
 }
 
 const getStatusText = (status: number) => {
@@ -359,8 +408,32 @@ onMounted(() => { loadData() })
 <style scoped lang="scss">
 .order-page { padding: 20px 0; background: #f5f7fa; min-height: 80vh; }
 .container { width: 1200px; margin: 0 auto; }
-.order-card { border-radius: 8px; }
-.card-header { font-weight: bold; font-size: 16px; }
+.order-card { border-radius: 12px; }
+.card-header {
+  font-weight: bold;
+  font-size: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  .header-tip { font-size: 12px; color: #94a3b8; font-weight: normal; }
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 10px;
+  .summary-item {
+    background: #f8fafc;
+    padding: 14px 16px;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    .label { font-size: 12px; color: #94a3b8; margin-bottom: 6px; }
+    .value { font-size: 20px; font-weight: 700; color: #0f172a; }
+  }
+}
+
+.status-tabs { margin: 10px 0 20px; }
 
 .pagination-box { margin-top: 20px; display: flex; justify-content: flex-end; }
 
