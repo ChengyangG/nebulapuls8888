@@ -2,7 +2,8 @@ import request from '@/utils/request'
 
 // --- 认证 ---
 export const loginApi = (data: any) => request({ url: '/auth/login', method: 'post', data })
-export const registerApi = (data: any) => request({ url: '/auth/register', method: 'post', data })
+// ✅ [修复] 路径已修正为 /auth/register/user，且移除了重复定义
+export const registerApi = (data: any) => request({ url: '/auth/register/user', method: 'post', data })
 
 // --- 商品与分类 ---
 export const searchProducts = (params: any) => request({ url: '/portal/product/search', method: 'get', params })
