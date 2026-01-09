@@ -5,7 +5,7 @@
       <el-breadcrumb separator="/" class="breadcrumb">
         <el-breadcrumb-item :to="{ path: '/' }">首页</el-breadcrumb-item>
         <el-breadcrumb-item :to="{ path: '/search' }">商品列表</el-breadcrumb-item>
-        <el-breadcrumb-item>{{ product.name }}</el-breadcrumb-item>
+        <el-breadcrumb-item>{{ product.name || '商品详情' }}</el-breadcrumb-item>
       </el-breadcrumb>
 
       <el-card shadow="never" v-loading="loading" class="main-card">
@@ -13,13 +13,25 @@
           <!-- 左侧图片 -->
           <div class="left-gallery">
             <el-image
-                v-if="product.mainImage"
-                :src="product.mainImage"
-                class="main-image"
-                fit="cover"
-                :preview-src-list="[product.mainImage]"
+              v-if="activeImage"
+              :src="activeImage"
+              class="main-image"
+              fit="cover"
+              :preview-src-list="galleryImages"
             />
             <div v-else class="image-placeholder">暂无图片</div>
+
+            <div class="thumb-list" v-if="galleryImages.length > 1">
+              <div
+                v-for="(img, index) in galleryImages"
+                :key="img + index"
+                class="thumb-item"
+                :class="{ active: activeImage === img }"
+                @click="activeImage = img"
+              >
+                <img :src="img" alt="thumbnail" />
+              </div>
+            </div>
           </div>
 
           <!-- 右侧信息 -->
@@ -27,11 +39,36 @@
             <h1 class="title">{{ product.name }}</h1>
             <p class="subtitle">{{ product.subtitle || '暂无详细描述' }}</p>
 
+            <div class="service-tags">
+              <span>官方正品</span>
+              <span>极速发货</span>
+              <span>7 天无忧退换</span>
+            </div>
+
+            <!-- 规格选择（合并自 codex 分支） -->
+            <div class="specs-block" v-if="specEntries.length">
+              <div class="spec-row" v-for="[specName, options] in specEntries" :key="specName">
+                <span class="spec-label">{{ specName }}</span>
+                <div class="spec-options">
+                  <span
+                    v-for="option in options"
+                    :key="option"
+                    class="spec-option"
+                    :class="{ active: selectedSpecs[specName] === option }"
+                    @click="selectedSpecs[specName] = option"
+                  >
+                    {{ option }}
+                  </span>
+                </div>
+              </div>
+            </div>
+
             <div class="price-box">
               <span class="label">价格</span>
               <div class="price-wrap">
                 <span class="currency">¥</span>
                 <span class="price">{{ product.price }}</span>
+                <span class="origin" v-if="product.originalPrice">¥{{ product.originalPrice }}</span>
               </div>
             </div>
 
@@ -55,22 +92,30 @@
             <div class="action-area">
               <div class="quantity-box">
                 <span class="label">数量</span>
-                <el-input-number
-                    v-model="quantity"
-                    :min="1"
-                    :max="product.stock"
-                    size="large"
-                />
+                <el-input-number v-model="quantity" :min="1" :max="product.stock" size="large" />
               </div>
 
               <div class="btn-group">
-                <!-- [修复] 使用 :icon 绑定，解决未使用导入报错 -->
                 <el-button type="primary" size="large" :icon="ShoppingCart" @click="handleAddToCart">
                   加入购物车
                 </el-button>
-                <el-button type="danger" plain size="large" :icon="Wallet">
+                <el-button type="danger" plain size="large" :icon="Wallet" @click="handleBuyNow">
                   立即购买
                 </el-button>
+              </div>
+
+              <div class="tip-row">
+                <span>24 小时内发货 · 支持开具电子发票</span>
+              </div>
+
+              <!-- 服务说明（合并自 codex 分支） -->
+              <div class="service-notice">
+                <div>
+                  <strong>物流说明：</strong>默认顺丰/京东物流，预计 2-5 天送达。
+                </div>
+                <div>
+                  <strong>售后保障：</strong>质量问题支持 7 天无忧退换。
+                </div>
               </div>
             </div>
           </div>
@@ -90,7 +135,13 @@
               <div v-if="reviews.length > 0" class="review-list">
                 <div v-for="item in reviews" :key="item.id" class="review-item">
                   <div class="user-info">
-                    <el-avatar :size="40" :src="item.userAvatar || 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png'" />
+                    <el-avatar
+                      :size="40"
+                      :src="
+                        item.userAvatar ||
+                        'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png'
+                      "
+                    />
                     <div class="user-meta">
                       <div class="username">{{ item.userName || '匿名用户' }}</div>
                     </div>
@@ -114,7 +165,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getProductDetail, addToCart, getProductReviews } from '@/api/store'
 import { ElMessage } from 'element-plus'
@@ -131,6 +182,10 @@ interface ProductDetail {
   stock: number
   sale?: number
   description?: string
+  originalPrice?: number
+  subImages?: string[]
+  // 合并自 codex：规格
+  specifications?: Record<string, string[]>
   [key: string]: any
 }
 
@@ -150,12 +205,22 @@ const userStore = useUserStore()
 
 const loading = ref(false)
 const reviewsLoading = ref(false)
-// [修复] 应用接口类型
 const product = ref<ProductDetail>({} as ProductDetail)
 const reviews = ref<ReviewItem[]>([])
 const totalReviews = ref(0)
 const quantity = ref(1)
 const activeTab = ref('detail')
+const galleryImages = ref<string[]>([])
+const activeImage = ref('')
+
+// 合并自 codex：规格选择状态
+const selectedSpecs = ref<Record<string, string>>({})
+
+// 规格 entries：[[specName, options], ...]
+const specEntries = computed<[string, string[]][]>(() => {
+  const specs = product.value.specifications || {}
+  return Object.entries(specs).map(([key, value]) => [key, value as string[]])
+})
 
 const loadData = async () => {
   const id = Number(route.params.id)
@@ -165,6 +230,15 @@ const loadData = async () => {
   try {
     const res: any = await getProductDetail(id)
     product.value = res
+    galleryImages.value = [res.mainImage, ...(res.subImages || [])].filter(Boolean)
+    activeImage.value = galleryImages.value[0] || ''
+
+    // 初始化默认规格（每个规格默认选第一个）
+    selectedSpecs.value = {}
+    specEntries.value.forEach(([specName, options]) => {
+      if (options?.length) selectedSpecs.value[specName] = options[0]
+    })
+
     loadReviews(id)
   } catch (error) {
     console.error(error)
@@ -199,8 +273,25 @@ const handleAddToCart = async () => {
     return
   }
   try {
+    // 如果你后端需要规格参数，可把 selectedSpecs 一起传：
+    // await addToCart({ productId: product.value.id, quantity: quantity.value, specifications: selectedSpecs.value })
     await addToCart({ productId: product.value.id, quantity: quantity.value })
     ElMessage.success('成功加入购物车')
+  } catch (e) {
+    // 错误已由 request.ts 处理
+  }
+}
+
+const handleBuyNow = async () => {
+  if (!userStore.token) {
+    ElMessage.warning('请先登录后操作')
+    router.push(`/login?redirect=${route.fullPath}`)
+    return
+  }
+  try {
+    // 同上：如需要规格，附加 specifications: selectedSpecs.value
+    await addToCart({ productId: product.value.id, quantity: quantity.value })
+    router.push('/cart')
   } catch (e) {
     // 错误已由 request.ts 处理
   }
@@ -210,17 +301,20 @@ onMounted(() => {
   loadData()
 })
 
-watch(() => route.params.id, (newId) => {
-  if (newId) {
-    quantity.value = 1
-    loadData()
+watch(
+  () => route.params.id,
+  (newId) => {
+    if (newId) {
+      quantity.value = 1
+      loadData()
+    }
   }
-})
+)
 </script>
 
 <style scoped lang="scss">
 .product-detail-page {
-  padding: 20px 0;
+  padding: 20px 0 60px;
   background: #f5f7fa;
   min-height: 80vh;
 }
@@ -234,28 +328,50 @@ watch(() => route.params.id, (newId) => {
 }
 .main-card {
   margin-bottom: 20px;
-  border-radius: 8px;
+  border-radius: 12px;
 }
 .product-container {
   display: flex;
   gap: 40px;
 }
 .left-gallery {
-  width: 400px;
+  width: 420px;
   .main-image {
     width: 100%;
-    height: 400px;
-    border-radius: 4px;
+    height: 420px;
+    border-radius: 12px;
     border: 1px solid #eee;
   }
   .image-placeholder {
     width: 100%;
-    height: 400px;
+    height: 420px;
     background: #f0f2f5;
     display: flex;
     align-items: center;
     justify-content: center;
     color: #909399;
+  }
+  .thumb-list {
+    display: flex;
+    gap: 10px;
+    margin-top: 12px;
+  }
+  .thumb-item {
+    width: 72px;
+    height: 72px;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 2px solid transparent;
+    cursor: pointer;
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    &.active {
+      border-color: #409eff;
+      box-shadow: 0 6px 14px rgba(64, 158, 255, 0.2);
+    }
   }
 }
 .right-info {
@@ -272,20 +388,94 @@ watch(() => route.params.id, (newId) => {
     font-size: 14px;
     line-height: 1.5;
   }
+  .service-tags {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 18px;
+    span {
+      background: #f1f5f9;
+      color: #475569;
+      font-size: 12px;
+      padding: 4px 10px;
+      border-radius: 999px;
+    }
+  }
+
+  /* 合并自 codex：规格样式 */
+  .specs-block {
+    background: #f8fafc;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 18px;
+    .spec-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
+    .spec-label {
+      width: 70px;
+      color: #64748b;
+      font-size: 13px;
+    }
+    .spec-options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .spec-option {
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid #e2e8f0;
+      cursor: pointer;
+      font-size: 13px;
+      color: #475569;
+      transition: all 0.2s ease;
+      &:hover {
+        border-color: #409eff;
+        color: #409eff;
+      }
+      &.active {
+        background: #409eff;
+        border-color: #409eff;
+        color: #fff;
+      }
+    }
+  }
+
   .price-box {
     background: #fff5f5;
     padding: 20px;
-    border-radius: 8px;
+    border-radius: 12px;
     margin-bottom: 25px;
     display: flex;
     align-items: baseline;
     gap: 15px;
-    .label { font-size: 14px; color: #606266; }
+    .label {
+      font-size: 14px;
+      color: #606266;
+    }
     .price-wrap {
       color: #f56c6c;
       font-weight: bold;
-      .currency { font-size: 16px; margin-right: 2px; }
-      .price { font-size: 32px; }
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+      .currency {
+        font-size: 16px;
+        margin-right: 2px;
+      }
+      .price {
+        font-size: 32px;
+      }
+      .origin {
+        font-size: 14px;
+        color: #94a3b8;
+        text-decoration: line-through;
+      }
     }
   }
   .meta-info {
@@ -295,7 +485,10 @@ watch(() => route.params.id, (newId) => {
     .meta-item {
       font-size: 14px;
       color: #606266;
-      .label { margin-right: 10px; color: #909399; }
+      .label {
+        margin-right: 10px;
+        color: #909399;
+      }
     }
   }
   .action-area {
@@ -305,22 +498,44 @@ watch(() => route.params.id, (newId) => {
       display: flex;
       align-items: center;
       gap: 15px;
-      .label { font-size: 14px; color: #606266; }
+      .label {
+        font-size: 14px;
+        color: #606266;
+      }
     }
     .btn-group {
       display: flex;
       gap: 15px;
     }
+    .tip-row {
+      margin-top: 16px;
+      font-size: 12px;
+      color: #94a3b8;
+    }
+
+    /* 合并自 codex：服务说明样式 */
+    .service-notice {
+      margin-top: 12px;
+      font-size: 12px;
+      color: #64748b;
+      line-height: 1.7;
+      background: #f8fafc;
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px dashed #cbd5f5;
+    }
   }
 }
 .detail-content {
   background: #fff;
-  border-radius: 8px;
+  border-radius: 12px;
   min-height: 400px;
   .product-desc {
     padding: 20px;
     line-height: 1.8;
-    :deep(img) { max-width: 100%; }
+    :deep(img) {
+      max-width: 100%;
+    }
   }
 }
 .review-item {
@@ -328,11 +543,17 @@ watch(() => route.params.id, (newId) => {
   padding: 20px;
   display: flex;
   gap: 20px;
-  &:last-child { border-bottom: none; }
+  &:last-child {
+    border-bottom: none;
+  }
   .user-info {
     width: 100px;
     text-align: center;
-    .username { font-size: 12px; color: #666; margin-top: 5px; }
+    .username {
+      font-size: 12px;
+      color: #666;
+      margin-top: 5px;
+    }
   }
   .review-content {
     flex: 1;
@@ -340,9 +561,16 @@ watch(() => route.params.id, (newId) => {
       display: flex;
       justify-content: space-between;
       margin-bottom: 8px;
-      .time { color: #ccc; font-size: 12px; }
+      .time {
+        color: #ccc;
+        font-size: 12px;
+      }
     }
-    .text { color: #333; font-size: 14px; line-height: 1.6; }
+    .text {
+      color: #333;
+      font-size: 14px;
+      line-height: 1.6;
+    }
   }
 }
 </style>
