@@ -100,9 +100,23 @@
           </div>
         </div>
 
-        <el-empty v-else description="购物车空空如也，快去逛逛吧">
-          <el-button type="primary" @click="router.push('/')">去首页</el-button>
-        </el-empty>
+        <EmptyState v-else description="购物车空空如也，快去逛逛吧" action-text="去首页" action-to="/">
+          <template #image>
+            <svg viewBox="0 0 220 160" aria-hidden="true" class="empty-illustration">
+              <defs>
+                <linearGradient id="cartGradient" x1="0" x2="1" y1="0" y2="1">
+                  <stop offset="0%" stop-color="#60a5fa" />
+                  <stop offset="100%" stop-color="#38bdf8" />
+                </linearGradient>
+              </defs>
+              <rect x="18" y="20" width="184" height="120" rx="18" fill="#f1f5f9" />
+              <path d="M52 60h106l-8 50H62z" fill="url(#cartGradient)" opacity="0.9" />
+              <circle cx="78" cy="118" r="10" fill="#94a3b8" />
+              <circle cx="142" cy="118" r="10" fill="#94a3b8" />
+              <path d="M74 42h72" stroke="#94a3b8" stroke-width="6" stroke-linecap="round" />
+            </svg>
+          </template>
+        </EmptyState>
       </el-card>
 
       <!-- 结算弹窗 -->
@@ -170,6 +184,7 @@ import request from '@/utils/request'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useRouter } from 'vue-router'
 import { InfoFilled } from '@element-plus/icons-vue'
+import EmptyState from '@/components/EmptyState.vue'
 
 // [核心修复] 定义明确的 CartItem 接口
 interface CartItem {
@@ -443,6 +458,7 @@ onMounted(() => {
 
 .unit-price { font-weight: bold; color: #303133; }
 .subtotal { color: #f56c6c; font-weight: bold; }
+
 .disabled-text { font-size: 12px; color: #999; }
 
 .cart-footer {
