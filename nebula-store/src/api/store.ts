@@ -41,6 +41,6 @@ export const getCouponCenter = (params: any) => request({ url: '/marketing/coupo
 export const receiveCoupon = (id: number) => request({ url: `/marketing/coupon/receive/${id}`, method: 'post' })
 export const getMyCoupons = () => request({ url: '/marketing/coupon/my', method: 'get' })
 // [新增] 获取当前秒杀活动
-export const getCurrentSeckills = () => request({ url: '/marketing/seckill/current', method: 'get' })
+export const getCurrentSeckills = () => request({ url: '/marketing/portal/seckill/list', method: 'get' })
 // [Phase 13 新增] 申请退款
 export const applyRefund = (data: { orderNo: string, reason: string }) => request({ url: '/order/refund', method: 'post', data })
