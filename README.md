@@ -1,127 +1,114 @@
-# Nebula Commerce — Full-stack Enterprise E-commerce System
+Nebula Pulse E-Commerce Platform
 
-> A solo-built production-style e-commerce platform
-> Backend APIs + Admin Dashboard + Store Frontend
-> Designed for performance, security, and real-world business logic.
+📖 Overview
 
----
+Nebula Pulse is a production-grade, full-stack e-commerce ecosystem designed for high performance and scalability. It features a microservices-ready architecture with a robust backend, a comprehensive admin dashboard, and a responsive customer storefront.
 
-## 🚀 Why This Project Matters
+This project demonstrates the ability to build complex systems handling high-concurrency orders, secure authentication, and real-time data management—core competencies for modern Full-Stack development.
 
-* Complete e-commerce solution: Backend services, admin panel, and end-user store.
-* Secure architecture: JWT authentication + role-based access control (RBAC).
-* Performance-aware: Redis caching, optimized SQL queries, scalable module design.
-* Real business features: Orders, payments, coupons, seckill (high concurrency), reviews, system notices.
-* Delivery-oriented: Clear structure, reproducible setup, and documentation-first mindset.
+🏗 Architecture & Modules
 
----
+The repository is organized into three main monorepo modules:
 
-## 📦 Project Modules
+Module
 
-1. **Backend API (nebula-commerce)** — Spring Boot 3 / Redis / JWT / MyBatis Plus
-2. **Admin UI (nebula-admin)** — Vue 3 / TypeScript / Element Plus
-3. **Store Frontend (nebula-store)** — Vue 3 / TypeScript / Pinia
+Description
 
----
+Tech Stack
 
-## 🔧 Quick Start
+nebula-commerce
 
-### Option A: Docker (recommended)
+Core Backend API
 
-```bash
-# Coming soon
-# docker compose up -d
-```
+Java, Spring Boot, MyBatis Plus, Spring Security, JWT
 
-### Option B: Manual Development Setup
+nebula-admin
 
-```bash
-# Backend
+Merchant/Admin Dashboard
+
+Vue 3, TypeScript, Vite, Pinia, Element Plus
+
+nebula-store
+
+Customer Storefront
+
+Vue 3, TypeScript, Vant UI, Mobile-First Design
+
+✨ Key Features
+
+🛡 Backend (nebula-commerce)
+
+High-Performance Architecture: Built with Spring Boot for rapid development and microservice scalability.
+
+Security First: Implemented Spring Security with JWT (JSON Web Token) for stateless, secure stateless authentication and Role-Based Access Control (RBAC).
+
+Data Persistence: Utilizes MyBatis Plus for efficient ORM and dynamic SQL handling with MySQL.
+
+Caching Strategy: Integrated Redis for caching hot data (product details, sessions) to reduce DB load and improve response times.
+
+High Concurrency: Optimized order processing logic to handle flash sales and high-traffic scenarios safely.
+
+🖥 Admin Dashboard (nebula-admin)
+
+Modern SPA: Developed with Vue 3 (Composition API) and TypeScript for type-safe, maintainable frontend code.
+
+State Management: Uses Pinia for centralized store management across components.
+
+Dynamic Routing: Permission-based routing (Async Routes) ensuring users only see what they are authorized to access.
+
+Data Visualization: Integrated charts and tables for real-time sales monitoring and user analytics.
+
+🛍 Storefront (nebula-store)
+
+Mobile-First Design: Responsive layout optimized for mobile shopping experiences using Vant UI.
+
+Smooth UX: Fast page loads via Vite and optimized asset bundling.
+
+Complete Flow: Full user journey implementation: Browsing -> Cart -> Checkout -> Payment Mock -> Order History.
+
+🚀 Getting Started
+
+Prerequisites
+
+JDK 17+
+
+Node.js 18+
+
+MySQL 8.0
+
+Redis
+
+1. Backend Setup
+
 cd nebula-commerce
+# Configure application.yml with your MySQL/Redis credentials
+mvn clean install
 mvn spring-boot:run
 
-# Admin UI
+
+2. Admin Panel Setup
+
 cd nebula-admin
 npm install
 npm run dev
 
-# Store UI
+
+3. Storefront Setup
+
 cd nebula-store
 npm install
 npm run dev
-```
-
-> Note: Requires JDK 21+, Node.js 18+, MySQL, Redis.
-
----
-
-## 🔍 API Testing & Documentation
-
-* Swagger/OpenAPI integration (to be enabled)
-* Postman Collection (to be added)
-
-These will allow interactive API testing and faster onboarding for collaborators.
-
----
-
-## 🧩 Backend Architecture
-
-Core modules:
-
-* **auth**: JWT authentication, RBAC permission model
-* **product**: Category, SKU, inventory, reviews
-* **order**: Cart, order creation, payment flow
-* **marketing**: Coupons, seckill (high-concurrency handling)
-* **member**: User profile, address management
-* **system**: Logs, notices, system configuration
-
----
-
-## 🖥️ Frontend Architecture
-
-### Admin Panel
-
-* Dashboard
-* Product & Order Management
-* User & Permission Control
-* Marketing Management
-
-### Store Frontend
-
-* Product browsing & search
-* Cart & checkout
-* User account center
-
----
-
-## 📁 Project Structure
-
-```
-nebulapuls8888/
-├── nebula-commerce   # Spring Boot backend
-├── nebula-admin      # Vue3 admin panel
-├── nebula-store      # Vue3 store frontend
-└── docs              # Documentation & screenshots
-```
-
----
-
-## 🧠 What I Personally Built
-
-* System architecture and module decomposition
-* REST API design and implementation
-* Authentication (JWT) & RBAC authorization
-* High-concurrency marketing endpoints using Redis
-* SQL optimization and backend performance tuning
-* Frontend-backend integration for all business flows
-
----
-
-## 📌 Roadmap
-
-* [ ] Dockerized one-command setup
-* [ ] Swagger & Postman documentation
-* [ ] Database seed scripts
-* [ ] CI/CD integration
 
 
+👨‍💻 Author
+
+Chengyang G.
+Full-Stack Engineer | Bug Fix & Feature Specialist
+
+I build complex systems and fix critical bugs in production environments.
+
+Specialties: Spring Boot, Vue 3, TypeScript, System Optimization.
+
+Experience: 4+ years building real production systems including e-commerce platforms and high-concurrency applications.
+
+Open for contract work and full-stack consulting.
