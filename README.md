@@ -58,8 +58,11 @@ API Latency	99th percentile	<200ms
 
 📦 Architecture Highlights
 
-![architecture-diagram]
+<img width="2559" height="1314" alt="屏幕截图 2026-01-24 123653" src="https://github.com/user-attachments/assets/23c16e25-6341-4bbc-821b-880167eb5d2f" />
 
+<img width="2559" height="1316" alt="屏幕截图 2026-01-24 123705" src="https://github.com/user-attachments/assets/fa4ba933-0f95-4fe7-9169-f0b570370955" />
+
+<img width="2559" height="1323" alt="屏幕截图 2026-01-24 123323" src="https://github.com/user-attachments/assets/21d0fa5a-92a1-4bea-ac10-aa83976150ad" />
 
 📁 Project Structure
 nebula-commerce     # Spring Boot backend
